@@ -1,1 +1,133 @@
 
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>XD SOCIAL</title>
+<style>
+body {
+  margin: 0;
+  background: #101020;
+  color: white;
+  font-family: Arial, sans-serif;
+  text-align: center;
+}
+header {
+  background: #713cff;
+  padding: 22px;
+  font-size: 28px;
+  font-weight: bold;
+}
+main {
+  max-width: 420px;
+  margin: 35px auto;
+  padding: 20px;
+}
+input, button {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 14px;
+  margin: 8px 0;
+  border-radius: 10px;
+  border: none;
+}
+button {
+  background: #713cff;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+.post {
+  background: #24243b;
+  padding: 18px;
+  margin-top: 20px;
+  border-radius: 12px;
+}
+</style>
+</head>
+<body>
+<header>💜 XD SOCIAL</header>
+<main>
+<h2>¡Bienvenido!</h2>
+<p>Conecta con el mundo.</p>
+
+<input id="username" placeholder="Nombre de usuario">
+<input id="email" type="email" placeholder="Correo electrónico">
+<input id="password" type="password" placeholder="Contraseña">
+
+<button onclick="register()">Crear cuenta</button>
+<button onclick="login()">Iniciar sesión</button>
+
+<p id="message"></p>
+<div id="profile" class="post" hidden></div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = "TU_PROJECT_URL";
+const SUPABASE_KEY = "TU_PUBLISHABLE_KEY";
+
+const db = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+async function register() {
+  const username = document.getElementById("username").value.trim();
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+
+  if (!username || !email || !password) {
+    return message("Completa todos los campos");
+  }
+
+  const { data, error } = await db.auth.signUp({
+    email, password
+  });
+
+  if (error) return message(error.message);
+
+  if (data.user && data.session) {
+    const { error: profileError } = await db
+      .from("Profiles")
+      .insert({
+        User_id: data.user.id,
+        username: username
+      });
+
+    if (profileError) return message(profileError.message);
+  }
+
+  message("¡Registro realizado! Revisa tu correo si te lo pide.");
+}
+
+async function login() {
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+
+  const { data, error } = await db.auth.signInWithPassword({
+    email, password
+  });
+
+  if (error) return message(error.message);
+
+  const { data: profile } = await db
+    .from("Profiles")
+    .select("username")
+    .eq("User_id", data.user.id)
+    .maybeSingle();
+
+  document.getElementById("profile").hidden = false;
+  document.getElementById("profile").textContent =
+    "¡Hola, " + (profile?.username || "usuario") + "! 💜";
+
+  message("¡Has iniciado sesión!");
+}
+
+function message(text) {
+  document.getElementById("message").textContent = text;
+}
+</script>
+</body>
+</html>
