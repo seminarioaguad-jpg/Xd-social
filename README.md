@@ -1,1 +1,1 @@
-# Xd-social
+# Zynora-chat-y-juegos
